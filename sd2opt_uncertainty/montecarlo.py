@@ -112,25 +112,154 @@ def create_parameter_samples(lut,
     # df.dropna(inplace=True)
     return df
     
+def size_distribution_correction(dist,
+                                 instrument = 'aps',
+                                dd = 0.9,  
+                                cc = 2., 
+                                ce_log = None,
+                                shape_c = 2.5 , 
+                                roh = 2.7,
+                                plot = True,
+                                    ):
+    """
+    This corrects the size distribution (diameters, and particle numbers) according to assumed parameters.
+
+    Parameters
+    ----------
+    dist : TYPE
+        DESCRIPTION.
+    daps : TYPE, optional
+        diameter uncertainty of APS, this is the intrinsic uncertainty not the chi related. The default is 0.9.
+    cc : TYPE, optional
+        this is diameter dependen counting effeicnecy uncertatinty in coarse mode. This is the sigma of a normal distribution                                     shape_c : TYPE, optional
+        The default is 2.5.
+    shape_c: ...
+        shape parameter. This is the parameter that goes from -x to +y in our case from -5 to 5                                     
+    roh : TYPE, optional
+        DESCRIPTION. The default is 2.7.
+    plot : TYPE, optional
+        DESCRIPTION. The default is True.
+
+    Returns
+    -------
+    dist : TYPE
+        DESCRIPTION.
+
+    """
+
+    #### 1. dist preconditioning
+    #######
+    dist_in = dist
+    dist = dist_in.copy()
+    dist = dist.convert2numberconcentration()
+
+
+
+    #### 2. diameter precision & accuracy, I actually do not know which of the two it is?
+    ##########
+    dist_tmp = dist.copy()
+    dist = dist.grow_sizedistribution(dd, raise_particle_loss_error=False)
+    # sometime very small particle losses can accure, so I allow it (above) and double-check below
+    diff = abs(dist.particle_number_concentration/dist_in.particle_number_concentration - 1)
+    assert(diff < 1e-8), f'diff: {diff}, dd: {dd}'
+
+    if plot:
+        a = plt.subplot()
+        dist_tmp.convert2numberconcentration().plot(ax = a)
+        dist.convert2numberconcentration().plot(ax = a)
+
+    #### 3. counting efficiency
+    #############
+    dist_tmp = dist.copy()
+    ce = ce_log(cc).interp(diameter = dist.bincenters)
+    dist.data = dist.data * ce.to_pandas()
+    dist.data[dist.data.isna()] = 0 #for some reason it created a nan in first place
+    if plot:
+        f,aa = plt.subplots(2, sharex=True, gridspec_kw={'hspace':0})
+
+        a = aa[0]
+        dist_tmp.convert2dNdlogDp().plot(ax = a)
+
+        a = aa[1]
+        ce.plot(ax = a)
+
+        a = aa[0]
+        dist.convert2dNdlogDp().plot(ax = a)
+
+        ######
+        a = aa[0]
+        a.set_yscale('log')
+
+    #### 4. convertion to volume equivalent diameter
+    #############    
+    
+    #### convert shape parameter to dynamic shape factor
+    shape = atmshape.AspectRatio2DynamicShapeFactor()
+    shape_dyn = float(shape.dataset.dynamic_shape_factor.interp(shape_parameter = shape_c))
+    shape_dyn
+    
+    dist_tmp = dist.copy()
+    if instrument == 'aps':
+        # get correction and apply to dist
+        # correction_fct = d_aps2d_vol(roh_p=roh, xsi = shape_dyn)
+        correction_fct = atmshape.EquivalentDiameters(diameter=1, 
+                                                      diameter_equivalent='aerodynamic', 
+                                                      density_measured=roh, 
+                                                      density_calibrated=2, 
+                                                      dynamic_shape_factor=shape_dyn).volume_diameter
+        
+    elif instrument == 'smps':
+        correction_fct = atmshape.EquivalentDiameters(diameter=1, 
+                                                      diameter_equivalent='mobility', 
+                                                      dynamic_shape_factor=shape_dyn).volume_diameter
+    
+        # correction_fct
+    dist = dist.grow_sizedistribution(correction_fct, raise_particle_loss_error=False)
+    diff = abs(dist.particle_number_concentration/dist_tmp.particle_number_concentration - 1)
+    assert(diff < 1e-8), f'diff: {diff}, roh: {roh}, xi: {shape_dyn}, corrfct: {correction_fct}'
+    
+    if plot:
+        a = plt.subplot()
+        dist_tmp.convert2numberconcentration().plot(ax = a)
+        dist.convert2numberconcentration().plot(ax = a)
+    
+    return dist
+
+def montecarlo(instrument, dist, lut, ce_log, row):
+    if instrument == 'aps':
+        roh=row.roh
+    elif instrument == 'smps':
+        roh = None
+    dist = size_distribution_correction(dist, 
+                                        instrument = instrument,
+                                        dd=row.d,
+                                        cc=row.ce,
+                                        ce_log = ce_log,
+                                        shape_c=row.pshapes,
+                                        roh=roh,
+                                        plot=False)
+
+    scattcoeff = lut2scatt_coeff(lut, dist, row.pshapes, row.n_real, row.n_imag, smoothen=True)
+    return scattcoeff
 
 #### all APS related
 
-def d_aps2d_vol(roh_p = 2, roh_0 = 2, xsi = 1):
-    """
-    Provides a correction factor to convert the aerodynamic diameter to the volume equivalent diameter
+# def d_aps2d_vol(roh_p = 2, roh_0 = 2, xsi = 1):
+#     """
+#     Provides a correction factor to convert the aerodynamic diameter to the volume equivalent diameter
     
-    Parameters
-    ----------
-    roh_p: actual particles density
-    roh_0: calibration density (either the acuatl calibration material, e.g. PSL, but more often then not an additional adjustem to a more realistic density, e.g. 2 in case of SGP
-    xsi: dynamic shape factor
+#     Parameters
+#     ----------
+#     roh_p: actual particles density
+#     roh_0: calibration density (either the acuatl calibration material, e.g. PSL, but more often then not an additional adjustem to a more realistic density, e.g. 2 in case of SGP
+#     xsi: dynamic shape factor
     
-    Returns
-    -------
-    correction factor for volume equivalent diameter
-    """
-    c = np.sqrt((roh_0 * xsi) / roh_p)
-    return c
+#     Returns
+#     -------
+#     correction factor for volume equivalent diameter
+#     """
+#     c = np.sqrt((roh_0 * xsi) / roh_p)
+#     return c
 
 
 
@@ -154,7 +283,7 @@ def get_counting_efficiency_fct_aps():
 
 
 
-def size_distribution_correction_aps(dist,
+def deprecated_size_distribution_correction_aps(dist,
                                      daps = 0.9,  
                                      cc = 2., 
                                      ce_log_aps = None,
@@ -238,11 +367,14 @@ def size_distribution_correction_aps(dist,
     # convert shape parameter to dynamic shape factor
     shape = atmshape.AspectRatio2DynamicShapeFactor()
     shape_dyn = float(shape.dataset.dynamic_shape_factor.interp(shape_parameter = shape_c))
-    shape_dyn
 
     # get correction and apply to dist
-    correction_fct = d_aps2d_vol(roh_p=roh, xsi = shape_dyn)
-    correction_fct
+    # correction_fct = d_aps2d_vol(roh_p=roh, xsi = shape_dyn)
+    correction_fct = atmshape.EquivalentDiameters(diameter=1, 
+                                                  diameter_equivalent='aerodynamic', 
+                                                  density_measured=roh, 
+                                                  density_calibrated=2, 
+                                                  dynamic_shape_factor=shape_dyn).volume_diameter
 
     # correction_fct
     dist = dist.grow_sizedistribution(correction_fct, raise_particle_loss_error=False)
@@ -259,17 +391,20 @@ def size_distribution_correction_aps(dist,
 
 
 
-def montecarlo_aps(dist_aps, lut_coarse, ce_log_aps, row):
-    dist = size_distribution_correction_aps(dist_aps, 
-                                            daps=row.d,
+def deprecated_montecarlo_aps(dist_aps, lut_coarse, ce_log_aps, row):
+    dist = size_distribution_correction(dist_aps, 
+                                        instrument = 'aps',
+                                            dd=row.d,
                                             cc=row.ce,
-                                            ce_log_aps = ce_log_aps,
+                                            ce_log = ce_log_aps,
                                             shape_c=row.pshapes,
                                             roh=row.roh,
                                             plot=False)
 
     scattcoeff = lut2scatt_coeff(lut_coarse, dist, row.pshapes, row.n_real, row.n_imag, smoothen=True)
     return scattcoeff
+
+
 
 #### all SMPS realted
 
@@ -290,3 +425,7 @@ def get_counting_efficiency_fct_spmps():
     
     ce_log_smps = lambda i:(10**((meanlog_smps + i * stdlog_smps)) / 10**(meanlog_smps))
     return ce_log_smps
+
+
+
+

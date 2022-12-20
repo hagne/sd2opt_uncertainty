@@ -227,8 +227,8 @@ if __name__ == "__main__":
         iteration_ni = 1
         iteration_ps = 2
         
-        d_min = 50/1.2
-        d_max = 750 * 1.2
+        d_min = 50/1.4
+        d_max = 750 * 1.4
         
         nr_sigma3 = 0.042
         nr_mean = 1.5
