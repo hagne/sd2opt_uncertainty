@@ -68,7 +68,7 @@ def calculate_optical_properties(return_dict, d,
                                    or_pdf = pytmatrix.orientation.uniform_pdf(),
                                  )
     scat = pytmatrix.scatter.sca_xsect(scatterer, 
-                                       # h_pol=False,
+                                        h_pol=False, #default is True
                                        )
     res = scat / scale**2
     # results.append(res)
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         p2oldin = None #pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03/lut03.2_coarse_257_9_5_5_ch51.nc')
         p2fld = pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550')
         # p2fld.mkdir()
-        p2out = 'lut03.2_550_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
+        p2out = 'lut03.2_550_pol_v_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
         no_cpu = 38
         chunksize = no_cpu * 10 #save at the end of every chunk, 
         timeout = 180 #minutes  
