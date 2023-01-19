@@ -44,6 +44,7 @@ def calculate_optical_properties(return_dict, d,
                                     pshape,
                                     n_real,
                                     n_imag, 
+                                    pol,
                                     ndgs, ddelt, verbose = False):
     """perform t-matrix approximation for particular set of parameters"""
     
@@ -52,7 +53,7 @@ def calculate_optical_properties(return_dict, d,
     return_dict[d] = np.nan
     do = d
     scale = 1e-12
-    wl = 550 * 1e-3 * scale # the  * 1e-3 is to get to the right unit, the scale to improve the speed, no idea why?!?
+    wl = 550 * 1e-3 * scale # the  * 1e-3 is to get to the right unit, the scale to improve the speed, no idea why?!? Did some small checks on what the effect is, beside speed, maybe i do this here? 
     # d = .500 #
     ratio = pshape
     # d = 2822* scale #limit with ndgs = 5
@@ -67,8 +68,12 @@ def calculate_optical_properties(return_dict, d,
                                    orient = pytmatrix.orientation.orient_averaged_fixed,
                                    or_pdf = pytmatrix.orientation.uniform_pdf(),
                                  )
+    if pol == 'h':
+        h_pol = True
+    if pol == 'v':
+        h_pol = False
     scat = pytmatrix.scatter.sca_xsect(scatterer, 
-                                        h_pol=False, #default is True
+                                        h_pol=h_pol, #default is True
                                        )
     res = scat / scale**2
     # results.append(res)
@@ -79,7 +84,7 @@ def calculate_optical_properties(return_dict, d,
         print('|', end = '', flush=True)
     return res
 
-def optimize_optical_properties(parent_dict, d, pshape, n_real, n_imag,  timeout,
+def optimize_optical_properties(parent_dict, d, pshape, n_real, n_imag, pol, timeout,
                                 ddeltlist =  [1e-3, 1e-2, 1e-1, 1, 1e1],                                  
                                 ndgs_list = [2,3,4,5,6,7,8,9,10,11,12,13,14],
                                 verbose = False):
@@ -118,6 +123,7 @@ def optimize_optical_properties(parent_dict, d, pshape, n_real, n_imag,  timeout
                                           pshape,
                                           n_real,
                                           n_imag,
+                                          pol,
                                           ndgs,
                                           ddelt,
                                           ),
@@ -179,7 +185,7 @@ def generate_lut(diameters, pshapes, n_real, n_imag):
     
 if __name__ == "__main__":
     #### settings
-    server = 'tsunami'
+    server = 'telg'
     
     if server == 'tsunami':
         p2oldin = None #pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03/lut03.2_coarse_257_9_5_5_ch51.nc')
@@ -192,9 +198,10 @@ if __name__ == "__main__":
         mode = 'coarse'
     
     elif server == 'telg':
-        p2oldin = None #pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03/lut03.2_coarse_257_9_5_5_ch51.nc')
-        p2fld = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_03.2')
-        p2out = 'lut03.2.1_pol_v_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
+        pol = 'v'
+        p2oldin = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2/lut03.2.1_pol_v_accu_257_9_5_5_ch_final.nc')
+        p2fld = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2')
+        p2out = 'lut03.2.1_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
         no_cpu = 6
         chunksize = no_cpu * 100
         timeout = 180
@@ -205,6 +212,8 @@ if __name__ == "__main__":
         iteration_nr = 1
         iteration_ni = 1
         iteration_ps = 2
+        
+        round_ni = 1
         
         d_min = 750 * 0.6
         d_max = 15000 * 1.4
@@ -227,6 +236,8 @@ if __name__ == "__main__":
         iteration_ni = 1
         iteration_ps = 2
         
+        round_ni = 2#1
+        
         d_min = 50/1.4
         d_max = 750 * 1.4
         
@@ -235,12 +246,14 @@ if __name__ == "__main__":
         sigma3 = 0.042
         
         #no imaginary part so far
-        ni_min = 0.001
-        ni_max = 0.01
+        ni_min = 0.01#0.001
+        ni_max = 0.05#0.01
         
         spmin = -2.7
         spmax = 2.7
         
+        limit_pshape = None
+        limit_d = 1e4
 
     
     
@@ -294,7 +307,7 @@ if __name__ == "__main__":
     
     #### refractive index imaginary
     # if mode == 'coarse': 
-    n_imag = get_samplingpoints(ni_min, ni_max, scale='log', round2=1, iteration=iteration_ni)
+    n_imag = get_samplingpoints(ni_min, ni_max, scale='log', round2=round_ni, iteration=iteration_ni)
     n_imag[0] = 0
     
     # elif mode == 'accu':
@@ -394,6 +407,7 @@ if __name__ == "__main__":
                                               pshape,
                                               n_r,
                                               n_i,
+                                              pol,
                                               timeout,
                                               ddeltlist,
                                               ndgs_list,
@@ -427,6 +441,7 @@ if __name__ == "__main__":
                                             ps_shape = pshapes.shape[0],
                                             nr_shape = n_real.shape[0],
                                             ni_shape = n_imag.shape[0],
+                                            pol = pol,
                                             chunk = int(chunk_idx),
                                                     )
                         ds.to_netcdf(p2fld.joinpath(p2o_t))
@@ -467,6 +482,7 @@ if __name__ == "__main__":
                         ps_shape = pshapes.shape[0],
                         nr_shape = n_real.shape[0],
                         ni_shape = n_imag.shape[0],
+                        pol = pol,
                         chunk = "_final")
     ds.to_netcdf(p2fld.joinpath(p2o_t))
     print('done')

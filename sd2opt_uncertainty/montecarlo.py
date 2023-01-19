@@ -92,6 +92,9 @@ def create_parameter_samples(lut,
     if not isinstance(roh_cs, type(None)):
         paramdict['roh'] = rng.standard_normal(sample_size) * roh_cs[1] + roh_cs[0]
     
+    #### remove extreme values that are outside the LUT. The LUT was designed to cover 3 sigma!!
+    # Keep in mind, normal distributions have long tails. Those values need to be removed.
+    
     df = pd.DataFrame(paramdict)
     
     lims = float(-lut.pshape.max()) + 1 ,1/(float(lut.pshape.min())) - 1
@@ -226,6 +229,28 @@ def size_distribution_correction(dist,
     return dist
 
 def montecarlo(instrument, dist, lut, ce_log, row):
+    """
+    Main function. It takes everything it needs to return the scattering coefficient
+
+    Parameters
+    ----------
+    instrument : TYPE
+        DESCRIPTION.
+    dist : TYPE
+        DESCRIPTION.
+    lut : TYPE
+        DESCRIPTION.
+    ce_log : TYPE
+        DESCRIPTION.
+    row : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    scattcoeff : TYPE
+        DESCRIPTION.
+
+    """
     if instrument == 'aps':
         roh=row.roh
     elif instrument == 'smps':
