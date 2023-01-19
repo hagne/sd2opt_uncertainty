@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 sd2opt_uncertainty/nohup.out
+sd2opt_uncertainty/nohup01.out
