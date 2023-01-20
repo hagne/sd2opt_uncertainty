@@ -188,20 +188,21 @@ if __name__ == "__main__":
     server = 'telg'
     
     if server == 'tsunami':
+        pol = 'h'
         p2oldin = None #pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03/lut03.2_coarse_257_9_5_5_ch51.nc')
-        p2fld = pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550')
-        # p2fld.mkdir()
-        p2out = 'lut03.2_550_pol_v_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
+        p2fld = pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/lut03.2_550_coarse_257_9_5_5_ch_final.nc')
+        # p2fld.mkdir() 
+        mode = 'coarse'
+        p2out = 'lut03.2.1_550_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
         no_cpu = 38
         chunksize = no_cpu * 10 #save at the end of every chunk, 
-        timeout = 180 #minutes  
-        mode = 'coarse'
+        timeout = 180 #minutes 
     
     elif server == 'telg':
-        pol = 'v'
-        p2oldin = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2/lut03.2.1_pol_v_accu_257_9_5_5_ch_final.nc')
+        pol = 'h'
+        p2oldin = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2/lut03.2.2_pol_h_accu_257_9_5_5_ch_final.nc')
         p2fld = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2')
-        p2out = 'lut03.2.1_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
+        p2out = 'lut03.2.3_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
         no_cpu = 6
         chunksize = no_cpu * 100
         timeout = 180
@@ -224,8 +225,8 @@ if __name__ == "__main__":
         ni_min = 0.001
         ni_max = 0.01
         
-        spmin = -2.5 #5
-        spmax = 2.5 #5
+        spmin = -5#-2.5 #5
+        spmax = 5#2.5 #5
         
         limit_pshape = None #[0.62, 1.6] #[0.44, 2.2]#[0.29,3.5]
         limit_d = 1e4
@@ -246,8 +247,8 @@ if __name__ == "__main__":
         sigma3 = 0.042
         
         #no imaginary part so far
-        ni_min = 0.01#0.001
-        ni_max = 0.05#0.01
+        ni_min = 0.05#0.01#0.001
+        ni_max = 0.25#0.05#0.01
         
         spmin = -2.7
         spmax = 2.7

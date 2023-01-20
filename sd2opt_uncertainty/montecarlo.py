@@ -72,7 +72,7 @@ def lut2scatt_coeff(lut, dist, shape_c, n_real, n_imag, smoothen = True):
 def create_parameter_samples(lut,
                              pshape_lims = (-2.7,2.7),
                              n_real_cs = (1.5, 0.028/2),
-                             n_imag_cs = (0.002, 0.0015),
+                             n_imag_cs = (0.002, 0.0015,'log'),
                              d_inst_cs = (1, 0.02),
                              roh_cs = None, #(2.5, 0.15),
                              sample_size = 300):
@@ -82,9 +82,14 @@ def create_parameter_samples(lut,
     # sigmax = 1
     rng = np.random.default_rng()
     
+    if n_imag_cs[2] == 'log':
+        n_imag = rng.lognormal(mean=np.log(n_imag_cs[0]), sigma=n_imag_cs[1]/n_imag_cs[0] ,size=sample_size)
+    elif n_imag_cs[2] == 'lin':
+        n_imag = (rng.standard_normal(sample_size) * n_imag_cs[1]) + n_imag_cs[0]
+        
     paramdict = {'pshapes':rng.uniform(pshape_lims[0], pshape_lims[1], size = sample_size),
                        'n_real': (rng.standard_normal(sample_size) * n_real_cs[1]) + n_real_cs[0],
-                       'n_imag': rng.lognormal(mean=np.log(n_imag_cs[0]), sigma=n_imag_cs[1]/n_imag_cs[0] ,size=sample_size),
+                       'n_imag': n_imag,
                        'ce': rng.standard_normal(sample_size),
                        'd': rng.standard_normal(sample_size) * d_inst_cs[1] + d_inst_cs[0],
                       }
