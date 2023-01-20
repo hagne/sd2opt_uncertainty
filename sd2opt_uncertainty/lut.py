@@ -189,8 +189,8 @@ if __name__ == "__main__":
     
     if server == 'tsunami':
         pol = 'h'
-        p2oldin = None #pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03/lut03.2_coarse_257_9_5_5_ch51.nc')
-        p2fld = pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/lut03.2_550_coarse_257_9_5_5_ch_final.nc')
+        p2oldin = pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/lut03.2_550_coarse_257_9_5_5_ch_final.nc')
+        p2fld =   pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/')
         # p2fld.mkdir() 
         mode = 'coarse'
         p2out = 'lut03.2.1_550_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
