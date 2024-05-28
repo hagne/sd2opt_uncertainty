@@ -52,7 +52,7 @@ def calculate_optical_properties(return_dict, d,
         print('.', end = '', flush=True)
     return_dict[d] = np.nan
     do = d
-    scale = 1e-12
+    scale = 1 #1e-12
     wl = 550 * 1e-3 * scale # the  * 1e-3 is to get to the right unit, the scale to improve the speed, no idea why?!? Did some small checks on what the effect is, beside speed, maybe i do this here? 
     # d = .500 #
     ratio = pshape
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     
     if server == 'tsunami':
         pol = 'h'
-        p2oldin = pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/lut03.2_550_coarse_257_9_5_5_ch_final.nc')
+        p2oldin = None #pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/lut03.2_550_coarse_257_9_5_5_ch_final.nc')
         p2fld =   pl.Path('/home/grad/htelg/projects/uncertainty_paper/lut03_550/')
         # p2fld.mkdir() 
         mode = 'coarse'
@@ -200,9 +200,9 @@ if __name__ == "__main__":
     
     elif server == 'telg':
         pol = 'h'
-        p2oldin = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2/lut03.2.2_pol_h_accu_257_9_5_5_ch_final.nc')
+        p2oldin = None #pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2/lut03.2.1_pol_v_accu_257_9_5_5_ch_final.nc')
         p2fld = pl.Path('/mnt/telg/projects/16_closure_of_arm_data/uncertainties/montecarlo/luts/lut_accu_550_0.3.2')
-        p2out = 'lut03.2.3_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
+        p2out = 'lut03.2.4_pol_{pol}_{mode}_{d_shape}_{ps_shape}_{nr_shape}_{ni_shape}_ch{chunk}.nc'
         no_cpu = 6
         chunksize = no_cpu * 100
         timeout = 180
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     elif mode == 'accu':
         iterations_d = 7
         iteration_nr = 1
-        iteration_ni = 1
+        iteration_ni = 2
         iteration_ps = 2
         
         round_ni = 2#1
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         sigma3 = 0.042
         
         #no imaginary part so far
-        ni_min = 0.05#0.01#0.001
+        ni_min = 0.01#0.01#0.001
         ni_max = 0.25#0.05#0.01
         
         spmin = -2.7

@@ -298,7 +298,8 @@ def get_counting_efficiency_fct_aps():
     see here for plots and development: http://localhost:8000/lab/workspaces/auto-8/tree/projects/16_closure_of_arm_data/uncertainties/montecarlo/counting_efficiency.ipynb
     """
     
-    fname = '/mnt/telg/projects/fundgrube/g3data_gesnatched/Pfeifer_2016/data_from_pfeifer_2016.nc'
+    # fname = '/mnt/telg/projects/fundgrube/g3data_gesnatched/Pfeifer_2016/data_from_pfeifer_2016.nc'
+    fname = '/export/htelg/fundgrube/g3data_gesnatched/Pfeifer_2016/data_from_pfeifer_2016.nc'
     aps_pfeifer = xr.open_dataset(fname)
 
     meanlog_aps = np.log10(aps_pfeifer.size_dist_ambient_all).mean(dim = 'instrument')
@@ -443,7 +444,8 @@ def get_counting_efficiency_fct_spmps():
     see here for plots and development: http://localhost:8000/lab/workspaces/auto-8/tree/projects/16_closure_of_arm_data/uncertainties/montecarlo/counting_efficiency.ipynb
     """
     # smps
-    fname = '/mnt/telg/projects/fundgrube/g3data_gesnatched/Wiedensohler_2012/project.nc'
+    # fname = '/mnt/telg/projects/fundgrube/g3data_gesnatched/Wiedensohler_2012/project.nc'
+    fname = '/export/htelg/fundgrube/g3data_gesnatched/Wiedensohler_2012/project.nc'
     smps_wieden = xr.open_dataset(fname, autoclose=True)
     
     expand2 = 750.
